@@ -64,14 +64,51 @@ def format_bytes_filter(bytes_size):
     bytes_size /= (1024 ** pow_val)
     return f"{round(bytes_size, 2)} {units[pow_val]}"
 
+# Database Auto-initializer
+def init_db_if_needed(db):
+    try:
+        cursor = db.cursor()
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='admin_users'")
+        table_exists = cursor.fetchone()
+        if not table_exists:
+            schema_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'database', 'schema.sql'))
+            if os.path.exists(schema_path):
+                with open(schema_path, 'r', encoding='utf-8') as f:
+                    schema_sql = f.read()
+                db.executescript(schema_sql)
+                
+                # Seed default admin
+                salt = bcrypt.gensalt()
+                password_hash = bcrypt.hashpw(b'admin', salt).decode('utf-8')
+                db.execute("""
+                    INSERT INTO admin_users (username, email, password_hash, password_changed, status)
+                    VALUES (?, ?, ?, 0, 'active')
+                """, ('admin', 'admin@example.com', password_hash))
+                db.commit()
+                app.logger.info("Database auto-initialized and seeded default admin.")
+    except Exception as e:
+        app.logger.error(f"Database auto-initialization failed: {e}")
+
 # Database Helper
 def get_db():
     db = getattr(g, '_database', None)
     if db is None:
-        db_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'database', 'db.sqlite'))
+        is_vercel = os.environ.get('VERCEL') == '1' or os.environ.get('NOW_REGION') is not None
+        if is_vercel:
+            db_path = '/tmp/db.sqlite'
+        else:
+            db_path = os.path.abspath(os.path.join(os.path.dirname(__file__), 'database', 'db.sqlite'))
+            
+        db_dir = os.path.dirname(db_path)
+        if not os.path.exists(db_dir):
+            os.makedirs(db_dir, exist_ok=True)
+            
         db = g._database = sqlite3.connect(db_path)
         db.row_factory = sqlite3.Row
         db.execute("PRAGMA foreign_keys = ON;")
+        
+        # Initialize tables if missing
+        init_db_if_needed(db)
     return db
 
 @app.teardown_appcontext
@@ -311,7 +348,11 @@ def document_stream():
         return "Access denied. You do not have permission to view this document.", 403
         
     # 4. Locate Physical File
-    storage_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'storage', 'pdfs'))
+    is_vercel = os.environ.get('VERCEL') == '1' or os.environ.get('NOW_REGION') is not None
+    if is_vercel:
+        storage_dir = '/tmp/storage/pdfs'
+    else:
+        storage_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'storage', 'pdfs'))
     file_path = os.path.join(storage_dir, doc['storage_path'])
     if not os.path.exists(file_path):
         return "Document file missing from physical storage", 404
@@ -741,7 +782,11 @@ def admin_api():
             
         # Generate safe storage filename
         safe_name = generate_secure_token(16) + '.pdf'
-        storage_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'storage', 'pdfs'))
+        is_vercel = os.environ.get('VERCEL') == '1' or os.environ.get('NOW_REGION') is not None
+        if is_vercel:
+            storage_dir = '/tmp/storage/pdfs'
+        else:
+            storage_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'storage', 'pdfs'))
         dest_path = os.path.join(storage_dir, safe_name)
         
         if not os.path.exists(storage_dir):
@@ -784,7 +829,11 @@ def admin_api():
             if not doc:
                 return jsonify({'error': 'Document not found'}), 404
                 
-            storage_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'storage', 'pdfs'))
+            is_vercel = os.environ.get('VERCEL') == '1' or os.environ.get('NOW_REGION') is not None
+            if is_vercel:
+                storage_dir = '/tmp/storage/pdfs'
+            else:
+                storage_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'storage', 'pdfs'))
             dest_path = os.path.join(storage_dir, doc['storage_path'])
             
             # Log audit trail first to satisfy foreign key constraint before deleting doc
