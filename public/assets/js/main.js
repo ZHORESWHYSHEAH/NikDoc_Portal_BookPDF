@@ -143,8 +143,10 @@ function openPdfReader(docId, docName) {
         document.getElementById('reader-loading-spinner').style.display = 'none';
         document.getElementById('book-wrapper').style.opacity = '1';
         
-        // Fit width initially on opening
+        // Fit width then render first page
         fitToWidth();
+        // Explicit initial render to ensure page 1 displays
+        renderBookPages(1);
     }).catch(function(error) {
         document.getElementById('reader-loading-spinner').style.display = 'none';
         const errAlert = document.getElementById('reader-error-alert');

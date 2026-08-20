@@ -75,13 +75,14 @@ def init_db_if_needed(db):
             if os.path.exists(schema_path):
                 with open(schema_path, 'r', encoding='utf-8') as f:
                     schema_sql = f.read()
+                # executescript auto-commits, so we call it and then do a fresh INSERT
                 db.executescript(schema_sql)
                 
                 # Seed default admin - password_changed=1 so no forced password reset
                 salt = bcrypt.gensalt()
                 password_hash = bcrypt.hashpw(b'admin', salt).decode('utf-8')
                 db.execute("""
-                    INSERT INTO admin_users (username, email, password_hash, password_changed, status)
+                    INSERT OR IGNORE INTO admin_users (username, email, password_hash, password_changed, status)
                     VALUES (?, ?, ?, 1, 'active')
                 """, ('admin', 'admin@example.com', password_hash))
                 db.commit()
@@ -185,12 +186,15 @@ def inject_csrf():
 def utility_processor():
     return dict(format_bytes=format_bytes_filter)
 
-# Prevent caching on all responses for security and real-time updates
+# Prevent caching on all non-binary responses for security and real-time updates
 @app.after_request
 def add_header(response):
-    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, private'
-    response.headers['Pragma'] = 'no-cache'
-    response.headers['Expires'] = '0'
+    # Skip no-cache for PDF streams so PDF.js byte-range requests work correctly
+    content_type = response.headers.get('Content-Type', '')
+    if 'application/pdf' not in content_type:
+        response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, private'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
     return response
 
 

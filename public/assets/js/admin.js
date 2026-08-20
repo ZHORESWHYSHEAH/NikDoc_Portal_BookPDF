@@ -17,7 +17,9 @@ function getCsrfToken() {
 
 // Host helper to generate user links
 function getBaseUrl() {
-    return window.location.origin + window.location.pathname.replace('/admin/index.html', '/index.html');
+    // Strip /admin/* from path to get root, works for /admin/index.html and /admin/
+    const base = window.location.origin + window.location.pathname.replace(/\/admin\/.*$/, '');
+    return base + '/index.html';
 }
 
 // ----------------------------------------------------
