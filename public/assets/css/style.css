@@ -706,6 +706,45 @@ tr:hover td {
     .search-wrapper {
         max-width: 100%;
     }
+    .reader-header {
+        padding: 12px 15px;
+        flex-direction: column;
+        gap: 12px;
+        align-items: stretch;
+    }
+    .reader-title {
+        max-width: 100%;
+        font-size: 16px;
+        text-align: center;
+        white-space: normal;
+    }
+    .reader-toolbar {
+        justify-content: space-between;
+        width: 100%;
+        gap: 8px;
+    }
+    .reader-toolbar .toolbar-divider {
+        display: none !important;
+    }
+    .reader-toolbar .btn-text {
+        display: none !important;
+    }
+    #zoom-in-btn, #zoom-out-btn, #zoom-fit-btn {
+        display: none !important;
+    }
+    .reader-viewport {
+        padding: 10px;
+    }
+    .modal-content {
+        width: calc(100% - 30px) !important;
+        margin: 15px !important;
+        padding: 20px !important;
+    }
+    .login-card {
+        padding: 25px 20px !important;
+        margin: 15px !important;
+        width: calc(100% - 30px) !important;
+    }
 }
 
 /* 3D Flipbook Viewer Layout */
