@@ -154,7 +154,7 @@ def utility_processor():
 # ========================================================
 
 @app.route('/')
-@app.route('/index.php')
+@app.route('/index.html')
 def index():
     token = request.args.get('token', '').strip()
     if not token:
@@ -259,7 +259,7 @@ def index():
                            visible_documents=visible_documents,
                            breadcrumbs=breadcrumbs)
 
-@app.route('/document.php')
+@app.route('/document')
 def document_stream():
     token = request.args.get('token', '').strip()
     doc_id = request.args.get('id', 0)
@@ -342,7 +342,7 @@ def document_stream():
     
     return Response(generate(), headers=headers)
 
-@app.route('/error_page.php')
+@app.route('/error_page.html')
 def error_page():
     return render_template('error_page.html')
 
@@ -351,7 +351,7 @@ def error_page():
 # ADMIN ROUTES
 # ========================================================
 
-@app.route('/admin/login.php', methods=['GET', 'POST'])
+@app.route('/admin/login.html', methods=['GET', 'POST'])
 def admin_login():
     # Redirect if already logged in
     if session.get('admin_logged_in') and 'require_password_change' not in session:
@@ -461,7 +461,7 @@ def admin_login():
                            success_message=success_message, 
                            show_change_password=show_change_password)
 
-@app.route('/admin/logout.php')
+@app.route('/admin/logout')
 def admin_logout():
     if session.get('admin_logged_in'):
         log_audit('LOGOUT', 'success')
@@ -469,7 +469,7 @@ def admin_logout():
     return redirect(url_for('admin_login'))
 
 @app.route('/admin/')
-@app.route('/admin/index.php')
+@app.route('/admin/index.html')
 def admin_index():
     if not session.get('admin_logged_in') or session.get('require_password_change'):
         return redirect(url_for('admin_login'))
@@ -481,7 +481,7 @@ def admin_index():
 # ADMIN API ROUTE
 # ========================================================
 
-@app.route('/admin/api.php', methods=['GET', 'POST'])
+@app.route('/admin/api', methods=['GET', 'POST'])
 def admin_api():
     # Authorization Check
     if not session.get('admin_logged_in'):

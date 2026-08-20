@@ -41,7 +41,7 @@ python app.py
 ```
 
 ### 4. Log In to the Administration Console
-1. Navigate to: **`http://localhost:8000/admin/login.php`** (or clean route: **`http://localhost:8000/admin/`**)
+1. Navigate to: **`http://localhost:8000/admin/login.html`** (or clean route: **`http://localhost:8000/admin/`**)
 2. Use the credentials configured in the database or seed data:
    - **Username**: `admin`
    - **Password**: `nikhil` (or the temporary password if resetting)
@@ -83,7 +83,7 @@ bookpdf/
 ## 🔒 Security Checklist & Principles Implemented
 
 1. **Private Storage Protection**: Raw PDF uploads are stored in `storage/pdfs/` outside of the public webroot. They cannot be directly navigated to or enumerated.
-2. **Server-Side Authorization**: The file streaming route `/document.php` intercepts all document requests, verifies that the user token is active, and matches user permission records before writing the file stream.
+2. **Server-Side Authorization**: The file streaming route `/document` intercepts all document requests, verifies that the user token is active, and matches user permission records before writing the file stream.
 3. **Password Hashing**: Admin passwords are saved as secure bcrypt hashes using Python's `bcrypt` library.
 4. **Brute Force Rate Limiting**: The login process queries the `audit_logs` table for failed attempts from the requester's IP within the last 15 minutes. If it exceeds 5 failed attempts, login is locked.
 5. **CSRF Protection**: All state-changing admin actions (uploads, user creations, updates) require a cryptographically generated token transmitted via header or form post.

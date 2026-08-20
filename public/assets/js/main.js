@@ -88,7 +88,7 @@ function initViewerControls() {
     // Download action
     document.getElementById('download-doc-btn').addEventListener('click', function() {
         if (activeDocId) {
-            window.location.href = `document.php?token=${getUserToken()}&id=${activeDocId}&download=1`;
+            window.location.href = `document?token=${getUserToken()}&id=${activeDocId}&download=1`;
         }
     });
     
@@ -131,7 +131,7 @@ function openPdfReader(docId, docName) {
     document.getElementById('book-wrapper').style.opacity = '0';
     
     // Generate secure URL path to stream file
-    const url = `document.php?token=${getUserToken()}&id=${docId}`;
+    const url = `document?token=${getUserToken()}&id=${docId}`;
     
     // Load document using PDF.js
     pdfjsLib.getDocument(url).promise.then(function(pdfDoc_) {

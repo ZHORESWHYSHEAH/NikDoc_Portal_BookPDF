@@ -17,7 +17,7 @@ function getCsrfToken() {
 
 // Host helper to generate user links
 function getBaseUrl() {
-    return window.location.origin + window.location.pathname.replace('/admin/index.php', '/index.php');
+    return window.location.origin + window.location.pathname.replace('/admin/index.html', '/index.html');
 }
 
 // ----------------------------------------------------
@@ -77,7 +77,7 @@ function showToast(message, type = 'success') {
 // DASHBOARD VIEW
 // ----------------------------------------------------
 function loadDashboardStats() {
-    fetch('api.php?action=stats')
+    fetch('api?action=stats')
         .then(res => res.json())
         .then(data => {
             if (data.error) return;
@@ -93,7 +93,7 @@ function loadDashboardStats() {
 // RECIPIENT MANAGEMENT
 // ----------------------------------------------------
 function loadUsers() {
-    fetch('api.php?action=get_users')
+    fetch('api?action=get_users')
         .then(res => res.json())
         .then(users => {
             const tbody = document.getElementById('users-table-body');
@@ -155,7 +155,7 @@ function toggleUser(id, newStatus) {
     fd.append('status', newStatus);
     fd.append('csrf_token', getCsrfToken());
     
-    fetch('api.php?action=toggle_user', { method: 'POST', body: fd })
+    fetch('api?action=toggle_user', { method: 'POST', body: fd })
         .then(res => res.json())
         .then(data => {
             if (data.error) showToast(data.error, 'error');
@@ -173,7 +173,7 @@ function regenerateToken(id) {
     fd.append('id', id);
     fd.append('csrf_token', getCsrfToken());
     
-    fetch('api.php?action=regenerate_token', { method: 'POST', body: fd })
+    fetch('api?action=regenerate_token', { method: 'POST', body: fd })
         .then(res => res.json())
         .then(data => {
             if (data.error) showToast(data.error, 'error');
@@ -191,7 +191,7 @@ function deleteUser(id) {
     fd.append('id', id);
     fd.append('csrf_token', getCsrfToken());
     
-    fetch('api.php?action=delete_user', { method: 'POST', body: fd })
+    fetch('api?action=delete_user', { method: 'POST', body: fd })
         .then(res => res.json())
         .then(data => {
             if (data.error) showToast(data.error, 'error');
@@ -217,7 +217,7 @@ let currentFolderId = '';
 
 function loadDocs(folderId = '') {
     currentFolderId = folderId;
-    fetch(`api.php?action=get_docs&folder_id=${folderId}`)
+    fetch(`api?action=get_docs&folder_id=${folderId}`)
         .then(res => res.json())
         .then(data => {
             // Update breadcrumbs
@@ -312,7 +312,7 @@ function updateDirectorySelects(folders, currentId) {
         
         // Add current folders list (In a real hierarchy we might recursively fetch all folders,
         // but for V1, listing folders at current level or doing a quick list is sufficient)
-        fetch('api.php?action=get_docs&folder_id=')
+        fetch('api?action=get_docs&folder_id=')
             .then(res => res.json())
             .then(data => {
                 // Render root directories
@@ -334,7 +334,7 @@ function deleteFolder(id) {
     fd.append('id', id);
     fd.append('csrf_token', getCsrfToken());
     
-    fetch('api.php?action=delete_folder', { method: 'POST', body: fd })
+    fetch('api?action=delete_folder', { method: 'POST', body: fd })
         .then(res => res.json())
         .then(data => {
             if (data.error) showToast(data.error, 'error');
@@ -352,7 +352,7 @@ function deleteFile(id) {
     fd.append('id', id);
     fd.append('csrf_token', getCsrfToken());
     
-    fetch('api.php?action=delete_file', { method: 'POST', body: fd })
+    fetch('api?action=delete_file', { method: 'POST', body: fd })
         .then(res => res.json())
         .then(data => {
             if (data.error) showToast(data.error, 'error');
@@ -420,7 +420,7 @@ function handleFileUpload(file) {
     fd.append('csrf_token', getCsrfToken());
     
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', 'api.php?action=upload_file', true);
+    xhr.open('POST', 'api?action=upload_file', true);
     
     xhr.upload.onprogress = function(e) {
         if (e.lengthComputable) {
@@ -470,7 +470,7 @@ function initForms() {
             fd.append('email', document.getElementById('user-email-input').value);
             fd.append('csrf_token', getCsrfToken());
             
-            fetch('api.php?action=create_user', { method: 'POST', body: fd })
+            fetch('api?action=create_user', { method: 'POST', body: fd })
                 .then(res => res.json())
                 .then(data => {
                     if (data.error) showToast(data.error, 'error');
@@ -494,7 +494,7 @@ function initForms() {
             fd.append('parent_id', document.getElementById('parent-folder-select').value);
             fd.append('csrf_token', getCsrfToken());
             
-            fetch('api.php?action=create_folder', { method: 'POST', body: fd })
+            fetch('api?action=create_folder', { method: 'POST', body: fd })
                 .then(res => res.json())
                 .then(data => {
                     if (data.error) showToast(data.error, 'error');
@@ -550,7 +550,7 @@ function loadUserPermissions(userId) {
     docsList.innerHTML = '<p style="color:var(--text-muted); text-align:center;">Loading documents...</p>';
     foldersList.innerHTML = '<p style="color:var(--text-muted); text-align:center;">Loading folders...</p>';
     
-    fetch(`api.php?action=get_permissions&user_id=${userId}`)
+    fetch(`api?action=get_permissions&user_id=${userId}`)
         .then(res => res.json())
         .then(data => {
             if (data.error) {
@@ -606,7 +606,7 @@ function createPermissionRow(userId, type, itemId, name, isChecked) {
         fd.append('item_id', itemId);
         fd.append('csrf_token', getCsrfToken());
         
-        fetch(`api.php?action=${action}`, { method: 'POST', body: fd })
+        fetch(`api?action=${action}`, { method: 'POST', body: fd })
             .then(res => res.json())
             .then(data => {
                 if (data.error) {
@@ -638,7 +638,7 @@ function loadLogs(page = 1) {
     const actionVal = document.getElementById('log-action-filter').value;
     const statusVal = document.getElementById('log-status-filter').value;
     
-    fetch(`api.php?action=get_logs&page=${page}&action_filter=${actionVal}&status_filter=${statusVal}`)
+    fetch(`api?action=get_logs&page=${page}&action_filter=${actionVal}&status_filter=${statusVal}`)
         .then(res => res.json())
         .then(data => {
             if (data.error) {
