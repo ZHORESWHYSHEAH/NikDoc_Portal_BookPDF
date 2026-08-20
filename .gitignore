@@ -35,8 +35,7 @@ env/
 .env
 
 # Database (keep schema.sql, ignore local sqlite instances if you want fresh DB)
-# For this project, you might want to keep database/db.sqlite if it contains active data,
-# but it is usually ignored in larger projects. Let's leave it un-ignored for now since the user needs it.
+database/db.sqlite
 
 # IDE / Editor settings
 .vscode/
