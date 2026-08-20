@@ -32,7 +32,7 @@ app.secret_key = os.environ.get('APP_KEY', 'nikdoc-portal-default-stable-secret-
 # Configure session cookies for security
 app.config.update(
     SESSION_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SAMESITE='Strict',
+    SESSION_COOKIE_SAMESITE='Lax',
 )
 
 # Custom Template Filters
@@ -77,12 +77,12 @@ def init_db_if_needed(db):
                     schema_sql = f.read()
                 db.executescript(schema_sql)
                 
-                # Seed default admin
+                # Seed default admin - password_changed=1 so no forced password reset
                 salt = bcrypt.gensalt()
                 password_hash = bcrypt.hashpw(b'admin', salt).decode('utf-8')
                 db.execute("""
                     INSERT INTO admin_users (username, email, password_hash, password_changed, status)
-                    VALUES (?, ?, ?, 0, 'active')
+                    VALUES (?, ?, ?, 1, 'active')
                 """, ('admin', 'admin@example.com', password_hash))
                 db.commit()
                 app.logger.info("Database auto-initialized and seeded default admin.")
@@ -482,22 +482,23 @@ def admin_login():
                                 error = 'Your admin account has been disabled.'
                                 log_audit('LOGIN_FAILURE', 'account_disabled')
                             else:
+                                # Mark password as changed if still at default, to skip forced reset
                                 if admin['password_changed'] == 0:
-                                    session['require_password_change'] = True
-                                    session['pending_admin_id'] = admin['id']
-                                    session['pending_admin_username'] = admin['username']
-                                    show_change_password = True
-                                    success_message = 'Please change your temporary password to continue.'
-                                else:
-                                    session['admin_logged_in'] = True
-                                    session['admin_id'] = admin['id']
-                                    session['admin_username'] = admin['username']
-                                    
-                                    db.execute("UPDATE admin_users SET last_login_at = datetime('now') WHERE id = ?", (admin['id'],))
-                                    db.commit()
-                                    
-                                    log_audit('LOGIN_SUCCESS', 'success')
-                                    return redirect(url_for('admin_index'))
+                                    try:
+                                        db.execute("UPDATE admin_users SET password_changed = 1 WHERE id = ?", (admin['id'],))
+                                        db.commit()
+                                    except Exception:
+                                        pass
+                                
+                                session['admin_logged_in'] = True
+                                session['admin_id'] = admin['id']
+                                session['admin_username'] = admin['username']
+                                
+                                db.execute("UPDATE admin_users SET last_login_at = datetime('now') WHERE id = ?", (admin['id'],))
+                                db.commit()
+                                
+                                log_audit('LOGIN_SUCCESS', 'success')
+                                return redirect(url_for('admin_index'))
                         else:
                             error = 'Invalid username or password.'
                             log_audit('LOGIN_FAILURE', 'invalid_credentials')

@@ -55,13 +55,13 @@ def setup_database():
             # Let's save it directly.
             cursor.execute("""
                 INSERT INTO admin_users (username, email, password_hash, password_changed, status)
-                VALUES (?, ?, ?, 0, 'active')
+                VALUES (?, ?, ?, 1, 'active')
             """, (username, email, password_hash))
             conn.commit()
             print("Default admin user created successfully:")
             print(f"  Username: {username}")
             print(f"  Email: {email}")
-            print(f"  Temp Password: {temp_password} (Require password change on first login)")
+            print(f"  Password: {temp_password}")
         else:
             print("Admin user 'admin' already exists. Skipping seed.")
 
