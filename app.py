@@ -9,6 +9,21 @@ import datetime
 import bcrypt
 from flask import Flask, request, session, redirect, url_for, render_template, jsonify, g, Response
 
+# Environment Loader
+def load_env():
+    env_path = os.path.join(os.path.dirname(__file__), '.env')
+    if os.path.exists(env_path):
+        with open(env_path, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith('#'):
+                    continue
+                if '=' in line:
+                    key, val = line.split('=', 1)
+                    os.environ[key.strip()] = val.strip()
+
+load_env()
+
 app = Flask(__name__, static_folder='public/assets', static_url_path='/assets', template_folder='templates')
 
 # Generate a persistent-ish session key or fall back to random
@@ -48,21 +63,6 @@ def format_bytes_filter(bytes_size):
     pow_val = min(pow_val, len(units) - 1)
     bytes_size /= (1024 ** pow_val)
     return f"{round(bytes_size, 2)} {units[pow_val]}"
-
-# Environment Loader
-def load_env():
-    env_path = os.path.join(os.path.dirname(__file__), '.env')
-    if os.path.exists(env_path):
-        with open(env_path, 'r', encoding='utf-8') as f:
-            for line in f:
-                line = line.strip()
-                if not line or line.startswith('#'):
-                    continue
-                if '=' in line:
-                    key, val = line.split('=', 1)
-                    os.environ[key.strip()] = val.strip()
-
-load_env()
 
 # Database Helper
 def get_db():
