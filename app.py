@@ -148,6 +148,14 @@ def inject_csrf():
 def utility_processor():
     return dict(format_bytes=format_bytes_filter)
 
+# Prevent caching on all responses for security and real-time updates
+@app.after_request
+def add_header(response):
+    response.headers['Cache-Control'] = 'no-cache, no-store, must-revalidate, private'
+    response.headers['Pragma'] = 'no-cache'
+    response.headers['Expires'] = '0'
+    return response
+
 
 # ========================================================
 # USER ROUTES
@@ -779,6 +787,9 @@ def admin_api():
             storage_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), 'storage', 'pdfs'))
             dest_path = os.path.join(storage_dir, doc['storage_path'])
             
+            # Log audit trail first to satisfy foreign key constraint before deleting doc
+            log_audit('DOCUMENT_DELETED', 'success', None, doc_id)
+
             db.execute("DELETE FROM permissions WHERE document_id = ?", (doc_id,))
             db.execute("DELETE FROM documents WHERE id = ?", (doc_id,))
             db.commit()
@@ -790,7 +801,6 @@ def admin_api():
                 except Exception:
                     pass
                     
-            log_audit('DOCUMENT_DELETED', 'success', None, doc_id)
             return jsonify({'message': 'Document deleted successfully'})
         except Exception:
             return jsonify({'error': 'Failed to delete document from database'}), 500
