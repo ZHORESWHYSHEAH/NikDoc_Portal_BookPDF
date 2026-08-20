@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NikDoc Portal - Admin Panel</title>
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+    
+    <header>
+        <div class="logo-container">
+            <div class="logo-icon"><i class="fa-solid fa-shield-halved"></i></div>
+            <div class="logo-text">NIKDOC PORTAL</div>
+            <span class="badge badge-active" style="font-size: 11px; margin-left: 10px;">ADMIN</span>
+        </div>
+        <div class="nav-actions">
+            <span style="font-size: 14px; color: var(--text-muted);">
+                Welcome, <strong style="color: #fff;">{{ username }}</strong>
+            </span>
+            <a href="/admin/logout.php" class="btn-secondary-premium" style="padding: 6px 16px; font-size: 13px;">
+                Log Out <i class="fa-solid fa-right-from-bracket"></i>
+            </a>
+        </div>
+    </header>
+
+    <main id="main-content">
+        <div class="dashboard-grid">
+            <!-- Sidebar Navigation -->
+            <aside class="glass-panel sidebar" aria-label="Dashboard Menu">
+                <div class="sidebar-link active" data-target="tab-dashboard" role="button" tabindex="0">
+                    <i class="fa-solid fa-chart-line"></i> Dashboard
+                </div>
+                <div class="sidebar-link" data-target="tab-users" role="button" tabindex="0">
+                    <i class="fa-solid fa-users"></i> Recipients
+                </div>
+                <div class="sidebar-link" data-target="tab-documents" role="button" tabindex="0">
+                    <i class="fa-solid fa-folder-open"></i> Documents
+                </div>
+                <div class="sidebar-link" data-target="tab-logs" role="button" tabindex="0">
+                    <i class="fa-solid fa-clock-rotate-left"></i> Audit Trail
+                </div>
+            </aside>
+
+            <!-- Main Work Panels -->
+            <section class="panel-content" aria-live="polite">
+                
+                <!-- 1. DASHBOARD TAB -->
+                <div id="tab-dashboard" class="tab-panel-section">
+                    <h2 style="margin-bottom: 25px;">Portal Overview</h2>
+                    
+                    <div class="card-stats-container">
+                        <div class="glass-panel stat-card">
+                            <span class="stat-label">Active Recipients</span>
+                            <span class="stat-value" id="stat-total-users">-</span>
+                        </div>
+                        <div class="glass-panel stat-card">
+                            <span class="stat-label">Indexed Documents</span>
+                            <span class="stat-value" id="stat-total-docs">-</span>
+                        </div>
+                        <div class="glass-panel stat-card">
+                            <span class="stat-label">Document Views</span>
+                            <span class="stat-value" id="stat-total-opens">-</span>
+                        </div>
+                        <div class="glass-panel stat-card">
+                            <span class="stat-label">Blocked Attempts</span>
+                            <span class="stat-value" id="stat-failed-access" style="color: var(--danger);">-</span>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel" style="padding: 30px; margin-top: 30px;">
+                        <h3 style="margin-bottom: 15px;"><i class="fa-solid fa-circle-nodes" style="color: var(--primary); margin-right: 8px;"></i> Access Principles</h3>
+                        <p style="color: var(--text-muted); line-height: 1.6; font-size: 15px;">
+                            The NikDoc Secure Document Distribution portal operates on a **zero-trust link access model**. 
+                            Recipient authentication relies entirely on highly random, non-guessable URLs generated on this panel. 
+                            If a user's link is revoked, their authorization token is instantly deleted from the local database, 
+                            denying any subsequent download or stream queries. Every document access, token generation, 
+                            and failed request is logged server-side for comprehensive auditing.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- 2. RECIPIENTS TAB -->
+                <div id="tab-users" class="tab-panel-section" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+                        <h2>Manage Recipients</h2>
+                        <button class="btn-premium" onclick="openModal('modal-add-user')">
+                            Add Recipient <i class="fa-solid fa-user-plus"></i>
+                        </button>
+                    </div>
+
+                    <div class="glass-panel table-panel">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Recipient Name</th>
+                                    <th>Email</th>
+                                    <th>Status</th>
+                                    <th>Access Token</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-table-body">
+                                <tr>
+                                    <td colspan="5" style="text-align: center; color: var(--text-muted);">Loading recipients list...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- 3. DOCUMENTS TAB -->
+                <div id="tab-documents" class="tab-panel-section" style="display: none;">
+                    <h2>Folder & Document Management</h2>
+                    <p style="color: var(--text-muted); margin-bottom: 25px;">Create directory structures, drag and drop PDF files to upload, and manage permissions.</p>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; align-items: start;" class="doc-management-split">
+                        
+                        <!-- Upload & Folder creation -->
+                        <div class="glass-panel" style="padding: 24px;">
+                            <h3 style="margin-bottom: 15px;">Add Document</h3>
+                            
+                            <!-- Folder selector -->
+                            <div class="form-group">
+                                <label for="upload-folder-select">Target Directory Folder</label>
+                                <select id="upload-folder-select" class="form-input" style="background: var(--bg-dark);">
+                                    <option value="">[Root Directory]</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Drag and drop upload zone -->
+                            <div class="upload-dropzone" id="pdf-upload-dropzone" role="button" tabindex="0">
+                                <div class="upload-icon"><i class="fa-solid fa-cloud-arrow-up"></i></div>
+                                <p style="font-weight: 500; margin-bottom: 5px;">Drag & Drop PDF file here</p>
+                                <p style="font-size: 12px; color: var(--text-muted);">or click to browse local storage (Max 50MB)</p>
+                                <input type="file" id="pdf-file-input" style="display: none;" accept="application/pdf">
+                            </div>
+
+                            <!-- Upload progress bar -->
+                            <div class="upload-progress-container" id="upload-progress-box">
+                                <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 4px;">
+                                    <span id="upload-filename">document.pdf</span>
+                                    <span id="upload-percentage">0%</span>
+                                </div>
+                                <div class="progress-bar-wrapper">
+                                    <div class="progress-bar-fill" id="upload-progress-fill"></div>
+                                </div>
+                            </div>
+                            
+                            <hr style="border: 0; border-top: 1px solid var(--glass-border); margin: 25px 0;">
+
+                            <h3 style="margin-bottom: 15px;">Create Directory Folder</h3>
+                            <form id="create-folder-form">
+                                <div class="form-group">
+                                    <label for="new-folder-name">Folder Name</label>
+                                    <input type="text" id="new-folder-name" class="form-input" placeholder="e.g. Invoices, Project Briefs" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="parent-folder-select">Parent Folder (Optional)</label>
+                                    <select id="parent-folder-select" class="form-input" style="background: var(--bg-dark);">
+                                        <option value="">[Root Directory]</option>
+                                    </select>
+                                </div>
+                                <button type="submit" class="btn-premium" style="width: 100%;">
+                                    Create Directory <i class="fa-solid fa-folder-plus"></i>
+                                </button>
+                            </form>
+                        </div>
+
+                        <!-- Current files list -->
+                        <div class="glass-panel" style="padding: 24px;">
+                            <div class="breadcrumb" id="docs-breadcrumb" style="margin-bottom: 15px; font-weight: 500;">
+                                <span class="breadcrumb-item" data-id="">Root</span>
+                            </div>
+                            
+                            <div id="file-manager-list" class="file-manager" style="max-height: 500px; overflow-y: auto; padding-right: 5px;">
+                                <!-- Folders and files lists injected here -->
+                                <p style="color: var(--text-muted); text-align: center; padding: 20px;">Loading contents...</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- 4. AUDIT TRAIL TAB -->
+                <div id="tab-logs" class="tab-panel-section" style="display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
+                        <h2>Audit Trail & Log Activity</h2>
+                        
+                        <div style="display: flex; gap: 10px; align-items: center;">
+                            <select id="log-action-filter" class="form-input" style="background: var(--bg-dark); padding: 8px 12px; width: 180px;">
+                                <option value="">[All Actions]</option>
+                            </select>
+                            
+                            <select id="log-status-filter" class="form-input" style="background: var(--bg-dark); padding: 8px 12px; width: 140px;">
+                                <option value="">[All Statuses]</option>
+                                <option value="success">Success</option>
+                                <option value="failure">Failure</option>
+                                <option value="denied">Denied</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel table-panel">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Recipient</th>
+                                    <th>Document</th>
+                                    <th>Action</th>
+                                    <th>IP Address</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="logs-table-body">
+                                <tr>
+                                    <td colspan="6" style="text-align: center; color: var(--text-muted);">Loading audit logs...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <div class="pagination" id="logs-pagination">
+                        <!-- Pagination buttons injected here -->
+                    </div>
+                </div>
+
+            </section>
+        </div>
+    </main>
+
+    <!-- TOAST NOTIFICATION CONTAINER -->
+    <div class="toast-container" id="toast-container" aria-live="assertive"></div>
+
+    <!-- MODAL: ADD RECIPIENT -->
+    <div class="modal-overlay" id="modal-add-user" onclick="closeModalOnOverlay(event)">
+        <div class="modal-content glass-panel">
+            <div class="modal-header">
+                <h3>Add New Recipient</h3>
+                <span class="modal-close" onclick="closeModal('modal-add-user')">&times;</span>
+            </div>
+            <form id="add-user-form">
+                <div class="form-group">
+                    <label for="user-name-input">Full Name</label>
+                    <input type="text" id="user-name-input" class="form-input" placeholder="e.g. John Doe" required autocomplete="name">
+                </div>
+                <div class="form-group">
+                    <label for="user-email-input">Email Address</label>
+                    <input type="email" id="user-email-input" class="form-input" placeholder="e.g. john@example.com" required autocomplete="email">
+                </div>
+                <button type="submit" class="btn-premium" style="width: 100%; margin-top: 10px;">
+                    Create & Generate URL <i class="fa-solid fa-link"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: MANAGE PERMISSIONS -->
+    <div class="modal-overlay" id="modal-permissions" onclick="closeModalOnOverlay(event)">
+        <div class="modal-content glass-panel" style="max-width: 600px;">
+            <div class="modal-header">
+                <div>
+                    <h3>Recipient Permissions</h3>
+                    <p style="font-size: 13px; color: var(--text-muted); margin-top: 4px;" id="perm-user-title">User: -</p>
+                </div>
+                <span class="modal-close" onclick="closeModal('modal-permissions')">&times;</span>
+            </div>
+            
+            <input type="hidden" id="perm-user-id" value="">
+            
+            <div style="display: flex; gap: 15px; margin-bottom: 20px; border-bottom: 1px solid var(--glass-border); padding-bottom: 10px;">
+                <span style="font-weight: 500; cursor: pointer; color: var(--primary);" id="tab-perm-docs-btn" onclick="togglePermTabs('docs')">Documents</span>
+                <span style="font-weight: 500; cursor: pointer; color: var(--text-muted);" id="tab-perm-folders-btn" onclick="togglePermTabs('folders')">Folders</span>
+            </div>
+
+            <!-- Docs list checklist -->
+            <div id="perm-docs-checklist" style="max-height: 300px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding: 5px;">
+                <p style="color: var(--text-muted); text-align: center;">Loading documents list...</p>
+            </div>
+
+            <!-- Folders list checklist -->
+            <div id="perm-folders-checklist" style="max-height: 300px; overflow-y: auto; display: none; flex-direction: column; gap: 12px; padding: 5px;">
+                <p style="color: var(--text-muted); text-align: center;">Loading folders list...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- CRITICAL CSRF TOKEN CONTAINER -->
+    <input type="hidden" id="csrf-token-global" value="{{ csrf_token }}">
+
+    <script src="/assets/js/admin.js"></script>
+</body>
+</html>

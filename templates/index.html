@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NikDoc Portal - Secure Library</title>
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- PDF.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+</head>
+<body>
+    <a href="#main-content" class="skip-link">Skip to main content</a>
+
+    <header>
+        <div class="logo-container">
+            <div class="logo-icon"><i class="fa-solid fa-shield-halved"></i></div>
+            <div class="logo-text">NIKDOC PORTAL</div>
+            <span class="badge badge-active" style="font-size: 11px; margin-left: 10px;">SECURE</span>
+        </div>
+        <div class="nav-actions">
+            <span style="font-size: 14px; color: var(--text-muted);">
+                Recipient: <strong style="color: #fff;">{{ user_name }}</strong>
+            </span>
+        </div>
+    </header>
+
+    <main id="main-content">
+        <div class="file-manager">
+            
+            <!-- Breadcrumbs Toolbar -->
+            <div class="glass-panel toolbar">
+                <div class="breadcrumb" aria-label="Directory Navigation">
+                    <a href="?token={{ token }}" class="breadcrumb-item" style="font-weight: 600; color: #fff;">Library Root</a>
+                    {% for crumb in breadcrumbs %}
+                        {% if loop.last %}
+                            <span class="breadcrumb-item" style="color: var(--text-muted);">{{ crumb.name }}</span>
+                        {% else: %}
+                            <a href="?token={{ token }}&folder={{ crumb.id }}" class="breadcrumb-item" style="color: var(--primary);">{{ crumb.name }}</a>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+                
+                <div class="search-wrapper">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" id="lib-search" class="form-input search-input" placeholder="Search assigned files..." aria-label="Search documents">
+                </div>
+            </div>
+
+            <!-- Folders and files list grid -->
+            <div class="file-grid" id="library-grid" aria-label="Documents Grid">
+                
+                {% if not visible_folders and not visible_documents %}
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 40px;" class="glass-panel">
+                        <i class="fa-solid fa-box-open" style="font-size: 48px; color: var(--text-muted); margin-bottom: 12px;"></i>
+                        <h3>No Documents Assigned</h3>
+                        <p style="color: var(--text-muted); margin-top: 5px;">There are currently no document files assigned to this folder.</p>
+                    </div>
+                {% endif %}
+
+                <!-- Folders -->
+                {% for folder in visible_folders %}
+                    <a href="?token={{ token }}&folder={{ folder.id }}" class="glass-panel file-item" style="display: block;">
+                        <div class="file-icon"><i class="fa-solid fa-folder"></i></div>
+                        <div class="file-name" title="{{ folder.name }}">{{ folder.name }}</div>
+                        <div class="file-meta">Folder</div>
+                    </a>
+                {% endfor %}
+
+                <!-- Documents -->
+                {% for doc in visible_documents %}
+                    <div class="glass-panel file-item clickable-file" 
+                         data-id="{{ doc.id }}" 
+                         data-name="{{ doc.original_name }}"
+                         onclick="openPdfReader({{ doc.id }}, '{{ doc.original_name | addslashes }}')">
+                        <div class="file-icon" style="color: #f87171;"><i class="fa-solid fa-file-pdf"></i></div>
+                        <div class="file-name" title="{{ doc.original_name }}">{{ doc.original_name }}</div>
+                        <div class="file-meta">{{ doc.file_size | format_bytes }} &bull; {{ doc.page_count }} Pages</div>
+                    </div>
+                {% endfor %}
+
+            </div>
+
+        </div>
+    </main>
+
+    <!-- ACCESSIBLE PDF READER MODAL (FULLSCREEN GLASSMORPHIC DIALOG) -->
+    <div class="reader-modal" id="pdf-reader-modal" role="dialog" aria-modal="true" aria-labelledby="reader-doc-title">
+        <div class="reader-header">
+            <h2 class="reader-title" id="reader-doc-title">Document</h2>
+            
+            <!-- Accessible toolbar -->
+            <div class="reader-toolbar" role="toolbar" aria-label="PDF Reader Toolbar">
+                <!-- Navigation controls -->
+                <button class="page-nav-btn" id="prev-page-btn" aria-label="Previous Page" title="Previous Page">
+                    <i class="fa-solid fa-chevron-left"></i>
+                </button>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                    <input type="number" class="page-input" id="curr-page-input" min="1" value="1" aria-label="Current Page">
+                    <span style="color: var(--text-muted); font-size: 14px;">/ <span id="total-pages-label">-</span></span>
+                </div>
+                <button class="page-nav-btn" id="next-page-btn" aria-label="Next Page" title="Next Page">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </button>
+                
+                <hr style="border: 0; border-left: 1px solid var(--glass-border); height: 24px; margin: 0 5px;">
+                
+                <!-- Zoom controls -->
+                <button class="page-nav-btn" id="zoom-out-btn" aria-label="Zoom Out" title="Zoom Out">
+                    <i class="fa-solid fa-magnifying-glass-minus"></i>
+                </button>
+                <button class="page-nav-btn" id="zoom-in-btn" aria-label="Zoom In" title="Zoom In">
+                    <i class="fa-solid fa-magnifying-glass-plus"></i>
+                </button>
+                <button class="btn-secondary-premium" style="padding: 6px 14px; font-size: 13px;" id="zoom-fit-btn">
+                    Fit Width
+                </button>
+ 
+                <hr style="border: 0; border-left: 1px solid var(--glass-border); height: 24px; margin: 0 5px;">
+
+                <!-- Actions -->
+                <button class="btn-premium" style="padding: 6px 16px; font-size: 13px;" id="download-doc-btn">
+                    Download <i class="fa-solid fa-download"></i>
+                </button>
+                <button class="btn-danger-premium" style="padding: 6px 14px; border-radius: 30px;" onclick="closePdfReader()" aria-label="Close PDF Viewer" title="Close Viewer">
+                    Close <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Render loading & errors -->
+        <div id="reader-loading-spinner" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; display: none;">
+            <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 40px; color: var(--primary); margin-bottom: 15px;"></i>
+            <p style="color: var(--text-muted);">Decrypting and loading document...</p>
+        </div>
+
+        <div id="reader-error-alert" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; display: none; max-width: 400px; padding: 25px;" class="glass-panel">
+            <i class="fa-solid fa-triangle-exclamation" style="font-size: 40px; color: var(--danger); margin-bottom: 15px;"></i>
+            <h3>Unable to Display PDF</h3>
+            <p style="color: var(--text-muted); margin-top: 10px;" id="reader-error-msg">The document failed to render on your device.</p>
+        </div>
+
+        <!-- Canvas Viewport -->
+        <div class="reader-viewport" id="reader-scroll-container">
+            <div class="book-wrapper" id="book-wrapper">
+                <div class="book-spine"></div>
+                <div class="book-pages-container" id="book-pages-container">
+                    <canvas id="pdf-canvas-left" class="book-page-canvas left-page-canvas"></canvas>
+                    <canvas id="pdf-canvas-right" class="book-page-canvas right-page-canvas"></canvas>
+                    
+                    <!-- Flipping page overlay -->
+                    <div class="flipping-page-wrapper" id="flipping-page-wrapper">
+                        <div class="flip-page-face flip-page-front">
+                            <canvas id="pdf-canvas-flip-front" style="width: 100%; height: 100%; display: block;"></canvas>
+                        </div>
+                        <div class="flip-page-face flip-page-back">
+                            <canvas id="pdf-canvas-flip-back" style="width: 100%; height: 100%; display: block;"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden token value for JS fetch calls -->
+    <input type="hidden" id="user-token-global" value="{{ token }}">
+
+    <script src="/assets/js/main.js"></script>
+</body>
+</html>

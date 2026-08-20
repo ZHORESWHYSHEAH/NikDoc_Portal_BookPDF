@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Access Denied - Secure Portal</title>
+    <link rel="stylesheet" href="/assets/css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div style="display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px;">
+        <div class="glass-panel" style="max-width: 450px; width: 100%; padding: 40px; text-align: center;">
+            <i class="fa-solid fa-ban" style="font-size: 54px; color: var(--danger); margin-bottom: 20px; filter: drop-shadow(0 0 10px rgba(248,113,113,0.3));"></i>
+            <h2 style="margin-bottom: 15px;">LINK EXPIRED OR INVALID</h2>
+            <p style="color: var(--text-muted); line-height: 1.6; font-size: 15px; margin-bottom: 30px;">
+                The secure access token provided is invalid or has been revoked by the administrator. 
+                Please contact the sender of this link to request a new authorization.
+            </p>
+            <a href="/admin/login.php" class="btn-premium" style="width: 100%;">
+                Go to Administrator Login <i class="fa-solid fa-lock"></i>
+            </a>
+        </div>
+    </div>
+</body>
+</html>
