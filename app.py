@@ -26,8 +26,8 @@ load_env()
 
 app = Flask(__name__, static_folder='public/assets', static_url_path='/assets', template_folder='templates')
 
-# Generate a persistent-ish session key or fall back to random
-app.secret_key = os.environ.get('APP_KEY', secrets.token_hex(32))
+# Generate a persistent-ish session key or fall back to a stable default key
+app.secret_key = os.environ.get('APP_KEY', 'nikdoc-portal-default-stable-secret-key-3b8c2d1e')
 
 # Configure session cookies for security
 app.config.update(
